@@ -1,6 +1,6 @@
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
-from .models import CustomUser, EmailOTP, Profile
+from .models import CustomUser, EmailOTP
 from django.contrib.auth import authenticate
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -74,12 +74,3 @@ class PasswordResetSerializer(serializers.Serializer):
     email = serializers.EmailField()
     otp = serializers.CharField(max_length=6)
     new_password = serializers.CharField(write_only=True, validators=[validate_password])
-
-
-class ProfileSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(source='user.email', read_only=True)
-    full_name = serializers.CharField(source='user.full_name', read_only=True)
-
-    class Meta:
-        model = Profile
-        fields = ['email', 'full_name', 'bio', 'tech_stack', 'github_link', 'linkedin_link', 'avatar']

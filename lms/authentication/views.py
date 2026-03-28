@@ -1,6 +1,6 @@
 from django.shortcuts import render
-from .serializers import RegisterSerializer, LoginSerializer, VerifyOTPSerializer,PasswordResetSerializer,ProfileSerializer
-from .models import CustomUser, EmailOTP, Profile
+from .serializers import RegisterSerializer, LoginSerializer, VerifyOTPSerializer,PasswordResetSerializer
+from .models import CustomUser, EmailOTP
 from rest_framework.generics import CreateAPIView
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -122,26 +122,3 @@ class PasswordResetView(APIView):
         except (CustomUser.DoesNotExist, EmailOTP.DoesNotExist):
             return Response({"error": "Invalid Email or OTP."}, status=status.HTTP_400_BAD_REQUEST)
         
-class ProfileDetailView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        profile = request.user.profile
-        serializer = ProfileSerializer(profile)
-        return Response(serializer.data)
-
-    def patch(self, request):
-        profile = request.user.profile
-        # 'partial=True' allows updating just one field (like just the bio)
-        serializer = ProfileSerializer(profile, data=request.data, partial=True)
-        
-        if serializer.is_valid():
-            serializer.save()
-            
-            # Logic to auto-complete profile status
-            if profile.bio and profile.tech_stack:
-                profile.is_profile_complete = True
-                profile.save()
-                
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
