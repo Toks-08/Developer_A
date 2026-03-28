@@ -47,18 +47,14 @@ class VerifyOTPSerializer(serializers.Serializer):
 
         try:
             user = CustomUser.objects.get(email=email)
-            # Get the latest OTP for this user
             otp_obj = EmailOTP.objects.filter(user=user, otp=otp_code).latest('created_at')
-            
-            # Check 1: Is it already verified?
+
             if otp_obj.is_verified:
                 raise serializers.ValidationError("This OTP has already been used.")
 
-            # Check 2: Use model logic to check if it's expired
             if otp_obj.is_expired():
                 raise serializers.ValidationError("This OTP has expired. Please request a new one.")
 
-            # Check 3: Brute force protection
             if otp_obj.attempts >= 5:
                 raise serializers.ValidationError("Too many failed attempts. Request a new code.")
 

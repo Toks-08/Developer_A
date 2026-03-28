@@ -35,19 +35,14 @@ class ProfileDetailView(APIView):
 class LearnerListView(generics.ListAPIView):
     serializer_class = LearnerListSerializer
 
-    # 1. Only fetch users who are INTERNS
     def get_queryset(self):
-        return CustomUser.objects.filter(role=CustomUser.Role.INTERN).select_related('profile')
 
-    # 2. Add Search and Ordering capabilities
+        return CustomUser.objects.filter(role=CustomUser.Role.INTERN).select_related('profile')
+    
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    
-    # This allows you to search by name or tech stack (from the related profile)
     search_fields = ['full_name', 'email', 'profile__tech_stack']
-    
-    # This allows you to sort by newest joiners
     ordering_fields = ['date_joined', 'full_name']
-    ordering = ['-date_joined'] # Default to newest first
+    ordering = ['-date_joined']
 
 
 class InstructorProfileView(generics.RetrieveUpdateAPIView):
@@ -57,7 +52,7 @@ class InstructorProfileView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         user = self.request.user
         
-        if user.role == "INSTRUCTOR": 
+        if user.role == "TEACHER": 
             return user 
     
         raise PermissionDenied("This page is reserved for instructors.")
