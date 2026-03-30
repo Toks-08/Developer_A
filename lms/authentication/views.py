@@ -1,5 +1,6 @@
 from django.shortcuts import render
-from .serializers import RegisterSerializer, LoginSerializer, VerifyOTPSerializer,PasswordResetSerializer
+from .serializers import (RegisterSerializer, LoginSerializer, VerifyOTPSerializer,
+                          PasswordResetSerializer, ForgotPasswordResetSerializer, SendOTPSerializer)
 from .models import CustomUser, EmailOTP
 from rest_framework.generics import CreateAPIView
 from rest_framework.views import APIView
@@ -10,6 +11,7 @@ from rest_framework import status
 from django.utils import timezone
 from datetime import timedelta
 import random
+from django.conf import settings
 
 # Create your views here.
 class RegistrationView(CreateAPIView):
@@ -91,34 +93,93 @@ class LogoutView(APIView):
         except Exception:
             return Response({"error": "Invalid token."}, status=status.HTTP_400_BAD_REQUEST)
         
-class PasswordResetView(APIView):
-    permission_classes = [AllowAny]
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         serializer = PasswordResetSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
+        user = request.user
+        old_password = serializer.validated_data['old_password']
+        new_password = serializer.validated_data['new_password']
+
+        if not user.check_password(old_password):
+            return Response({"error": "Old password is incorrect."}, status=400)
         
+
+        user.set_password(new_password)
+        user.save()
+
+        return Response({"message": "Password changed successfully!"}, status=200)
+    
+
+class ForgotPasswordResetView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = ForgotPasswordResetSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
         email = serializer.validated_data['email']
         otp_code = serializer.validated_data['otp']
         new_password = serializer.validated_data['new_password']
 
         try:
             user = CustomUser.objects.get(email=email)
-            otp_obj = EmailOTP.objects.filter(user=user, otp=otp_code, is_verified=False).latest('created_at')
+
+            otp_obj = EmailOTP.objects.filter(
+                user=user,
+                otp=otp_code,
+                is_verified=False
+            ).order_by('-created_at').first()
+            
+
+            if not otp_obj:
+                return Response({"error": "Invalid OTP"}, status=400)
 
             if otp_obj.is_expired():
-                return Response({"error": "OTP expired."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "OTP expired"}, status=400)
 
-            # Update Password
+            
             user.set_password(new_password)
             user.save()
 
-            # Mark OTP as used
             otp_obj.is_verified = True
             otp_obj.save()
 
-            return Response({"message": "Password reset successful!"}, status=status.HTTP_200_OK)
+            return Response({"message": "Password reset successful"})
 
-        except (CustomUser.DoesNotExist, EmailOTP.DoesNotExist):
-            return Response({"error": "Invalid Email or OTP."}, status=status.HTTP_400_BAD_REQUEST)
+        except CustomUser.DoesNotExist:
+            return Response({"error": "Invalid credentials"}, status=400)
         
+        
+class SendOTPView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = SendOTPSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data['email']
+
+        try:
+            user = CustomUser.objects.get(email=email)
+
+            EmailOTP.objects.filter(user=user, is_verified=False).update(is_verified=True)
+
+            otp = str(random.randint(100000, 999999))
+            EmailOTP.objects.create(user=user, otp=otp,
+                expires_at=timezone.now() + timedelta(minutes=10))
+
+            if settings.DEBUG:
+                return Response({
+                    "message": "OTP sent successfully",
+                    "otp": otp,
+                    
+                })
+
+        except CustomUser.DoesNotExist:
+            pass
+
+        return Response({"message": "If the email exists, OTP has been sent"})

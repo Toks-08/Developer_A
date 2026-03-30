@@ -2,7 +2,7 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.db import models
 from django.contrib.auth.base_user import BaseUserManager
 from django.utils import timezone
-import random,string
+from datetime import timedelta
 
 
 class UserManager(BaseUserManager):
@@ -51,12 +51,14 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         default=Role.INTERN
     )
 
+def get_default_expiry():
+    return timezone.now() + timedelta(minutes=10)
 
 class EmailOTP(models.Model):
     user = models.ForeignKey(CustomUser,on_delete=models.CASCADE,related_name='email_otps')
     otp = models.CharField(max_length=6)
     is_verified = models.BooleanField(default=False)
-    expires_at = models.DateTimeField()
+    expires_at = models.DateTimeField(get_default_expiry)
     attempts = models.IntegerField(default=0)
 
     created_at = models.DateTimeField(auto_now_add=True)
