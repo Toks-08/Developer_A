@@ -24,7 +24,8 @@ class UserManager(BaseUserManager):
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
-    full_name = models.CharField(max_length=255)
+    first_name = models.CharField(max_length=150)
+    last_name = models.CharField(max_length=150)
     phone_number = models.CharField(max_length=20, blank=True, unique=True, null=True)
 
     is_active = models.BooleanField(default=False)
@@ -41,14 +42,25 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         return self.email
 
     class Role(models.TextChoices):
+        LEARNER = "LEARNER", "Learner"
+        INSTRUCTOR = "INSTRUCTOR", "Instructor"
         ADMIN = "ADMIN", "Admin"
-        TEACHER = "TEACHER", "Teacher"
-        INTERN = "INTERN", "Intern"
 
     role = models.CharField(
         max_length=20,
         choices=Role.choices,
-        default=Role.INTERN
+
+    )
+
+    class Discipline(models.TextChoices):
+        BACKEND = "BACKEND", "Backend"
+        FRONTEND_DEVELOPMENT = "FRONTEND_DEVELOPMENT", "Frontend Development"
+        PRODUCT_MANAGEMENT = "PRODUCT_MANAGEMENT", "Product Management"
+    
+
+    discipline = models.CharField(
+        max_length=20,
+        choices=Discipline.choices,
     )
 
 def get_default_expiry():

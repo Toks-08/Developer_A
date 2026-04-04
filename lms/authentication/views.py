@@ -1,6 +1,8 @@
 from django.shortcuts import render
 from .serializers import (RegisterSerializer, LoginSerializer, VerifyOTPSerializer,
-                          PasswordResetSerializer, ForgotPasswordResetSerializer, SendOTPSerializer)
+                          PasswordResetSerializer, RequestPasswordResetSerializer,ResetPasswordSerializer,
+                          RequestEmailChangeSerializer, VerifyEmailChangeOTPSerializer,
+                          SendOTPSerializer)
 from .models import CustomUser, EmailOTP
 from rest_framework.generics import CreateAPIView
 from rest_framework.views import APIView
@@ -114,45 +116,30 @@ class ChangePasswordView(APIView):
         return Response({"message": "Password changed successfully!"}, status=200)
     
 
-class ForgotPasswordResetView(APIView):
+class RequestPasswordResetView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        serializer = ForgotPasswordResetSerializer(data=request.data)
+        serializer = RequestPasswordResetSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        serializer.save()
 
-        email = serializer.validated_data['email']
-        otp_code = serializer.validated_data['otp']
-        new_password = serializer.validated_data['new_password']
+        return Response(
+            {"message": "Password reset link sent to your email"},
+            status=status.HTTP_200_OK
+        )
 
-        try:
-            user = CustomUser.objects.get(email=email)
+class ResetPasswordView(APIView):
+    permission_classes = [AllowAny]
 
-            otp_obj = EmailOTP.objects.filter(
-                user=user,
-                otp=otp_code,
-                is_verified=False
-            ).order_by('-created_at').first()
-            
+    def post(self, request):
+        serializer = ResetPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
 
-            if not otp_obj:
-                return Response({"error": "Invalid OTP"}, status=400)
-
-            if otp_obj.is_expired():
-                return Response({"error": "OTP expired"}, status=400)
-
-            
-            user.set_password(new_password)
-            user.save()
-
-            otp_obj.is_verified = True
-            otp_obj.save()
-
-            return Response({"message": "Password reset successful"})
-
-        except CustomUser.DoesNotExist:
-            return Response({"error": "Invalid credentials"}, status=400)
-        
+        return Response(
+            {"message": "Password reset successful"},
+            status=status.HTTP_200_OK)
         
 class SendOTPView(APIView):
     permission_classes = [AllowAny]
@@ -183,3 +170,22 @@ class SendOTPView(APIView):
             pass
 
         return Response({"message": "If the email exists, OTP has been sent"})
+    
+
+class RequestEmailChangeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = RequestEmailChangeSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"message": "OTP sent to your new email."}, status=status.HTTP_200_OK)
+
+class VerifyEmailChangeOTPView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = VerifyEmailChangeOTPSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"message": "Email updated successfully."}, status=status.HTTP_200_OK)

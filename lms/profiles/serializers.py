@@ -5,11 +5,13 @@ from authentication.models import CustomUser
 
 class ProfileSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(source='user.email', read_only=True)
-    full_name = serializers.CharField(source='user.full_name', read_only=True)
+    first_name = serializers.CharField(source='user.first_name',read_only=True)
+    last_name = serializers.CharField(source='user.last_name',read_only=True)
+    phone_number = serializers.CharField(source='user.phone_number', required=False)
 
     class Meta:
         model = Profile
-        fields = ['email', 'full_name', 'bio', 'tech_stack', 'github_link', 'linkedin_link', 'avatar']
+        fields = ['email', 'first_name','last_name','phone_number','bio', 'tech_stack', 'github_link', 'linkedin_link', 'avatar']
 
 class LearnerProfileSerializer(serializers.ModelSerializer):
     class Meta:

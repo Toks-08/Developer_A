@@ -58,6 +58,3 @@ class InstructorProfileView(generics.RetrieveUpdateAPIView):
         raise PermissionDenied("This page is reserved for instructors.")
         
         
-        
-        
-
