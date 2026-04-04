@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'authentication',
     'profiles',
+    'teams',
     'rest_framework_simplejwt.token_blacklist',
 ]
 
@@ -154,3 +155,5 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

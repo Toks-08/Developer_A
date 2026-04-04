@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from authentication.models import CustomUser
-from .serializers import LearnerListSerializer,InstructorUserSerializer, ProfileSerializer
+from .serializers import LearnerListSerializer,InstructorListSerializer, ProfileSerializer
 
 from rest_framework.exceptions import PermissionDenied
 
@@ -37,7 +37,7 @@ class LearnerListView(generics.ListAPIView):
 
     def get_queryset(self):
 
-        return CustomUser.objects.filter(role=CustomUser.Role.INTERN).select_related('profile')
+        return CustomUser.objects.filter(role=CustomUser.Role.LEARNER).select_related('profile')
     
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['full_name', 'email', 'profile__tech_stack']
@@ -45,16 +45,16 @@ class LearnerListView(generics.ListAPIView):
     ordering = ['-date_joined']
 
 
-class InstructorProfileView(generics.RetrieveUpdateAPIView):
-    serializer_class = InstructorUserSerializer
-    permission_classes = [permissions.IsAuthenticated]
+class InstructorListView(generics.ListAPIView):
+    serializer_class = InstructorListSerializer
 
-    def get_object(self):
-        user = self.request.user
-        
-        if user.role == "TEACHER": 
-            return user 
-    
-        raise PermissionDenied("This page is reserved for instructors.")
-        
+    def get_queryset(self):
+        return CustomUser.objects.filter(
+            role=CustomUser.Role.INSTRUCTOR
+        ).select_related('profile')
+
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['full_name', 'email', 'profile__tech_stack']
+    ordering_fields = ['date_joined', 'full_name']
+    ordering = ['-date_joined']        
         

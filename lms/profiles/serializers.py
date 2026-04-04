@@ -11,15 +11,14 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ['email', 'first_name','last_name','phone_number','bio', 'tech_stack', 'github_link', 'linkedin_link', 'avatar']
+        fields = ['email', 'first_name','last_name','phone_number','bio', 'tech_stack', 'github_link', 'linkedin_link', 'profile_picture']
 
 class LearnerProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ['bio', 'tech_stack', 'avatar', 'github_link']
+        fields = ['bio', 'tech_stack', 'profile_picture', 'github_link']
 
 class LearnerListSerializer(serializers.ModelSerializer):
-    # This nesting allows you to see profile data inside the user object
     profile = LearnerProfileSerializer(read_only=True)
 
     class Meta:
@@ -30,29 +29,11 @@ class LearnerListSerializer(serializers.ModelSerializer):
 class InstructorProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ['bio', 'tech_stack', 'github_link', 'linkedin_link', 'avatar', 'is_profile_complete']
+        fields = ['bio', 'tech_stack', 'github_link', 'linkedin_link', 'profile_picture', 'is_profile_complete']
 
-class InstructorUserSerializer(serializers.ModelSerializer):
-    profile = InstructorProfileSerializer()
+class InstructorListSerializer(serializers.ModelSerializer):
+    profile = InstructorProfileSerializer(read_only=True)
 
     class Meta:
         model = CustomUser
-        fields = ['id', 'email', 'full_name', 'phone_number', 'role', 'profile']
-        read_only_fields = ['email', 'role'] 
-
-    def update(self, instance, validated_data):
-        profile_data = validated_data.pop('profile', None)
-        
-        # Update User fields
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
-
-        # Update Profile fields
-        if profile_data:
-            profile = instance.profile
-            for attr, value in profile_data.items():
-                setattr(profile, attr, value)
-            profile.save()
-            
-        return instance
+        fields = ['id', 'first_name','last_name', 'email', 'role', 'profile']
