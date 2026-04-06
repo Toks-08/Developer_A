@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'authentication',
     'profiles',
     'teams',
+    'notification_preferences',
     'rest_framework_simplejwt.token_blacklist',
 ]
 
