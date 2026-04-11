@@ -1,13 +1,13 @@
 # authentication/views.py
-from rest_framework import generics, filters, permissions
+from rest_framework import generics, filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from authentication.models import CustomUser
 from .serializers import LearnerListSerializer,InstructorListSerializer, ProfileSerializer
+from authentication.permissions import (IsAdmin,IsInstructor,IsLearner)
 
-from rest_framework.exceptions import PermissionDenied
 
 class ProfileDetailView(APIView):
     permission_classes = [IsAuthenticated]
@@ -34,6 +34,7 @@ class ProfileDetailView(APIView):
 
 class LearnerListView(generics.ListAPIView):
     serializer_class = LearnerListSerializer
+    permission_classes = [IsAdmin]
 
     def get_queryset(self):
 
@@ -47,6 +48,7 @@ class LearnerListView(generics.ListAPIView):
 
 class InstructorListView(generics.ListAPIView):
     serializer_class = InstructorListSerializer
+    permission_classes = [IsAdmin]
 
     def get_queryset(self):
         return CustomUser.objects.filter(

@@ -47,15 +47,27 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+    
+    @property
+    def is_learner(self):
+        return self.role == self.Role.LEARNER
+
+    @property
+    def is_instructor(self):
+        return self.role == self.Role.INSTRUCTOR
+
+    @property
+    def is_admin(self):
+        return self.role == self.Role.ADMIN
 
     class Role(models.TextChoices):
         LEARNER = "LEARNER", "Learner"
         INSTRUCTOR = "INSTRUCTOR", "Instructor"
-        ADMIN = "ADMIN", "Admin"
-
+        
     role = models.CharField(
         max_length=20,
         choices=Role.choices,
+        default=Role.LEARNER
 
     )
 
